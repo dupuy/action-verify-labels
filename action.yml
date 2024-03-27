@@ -77,7 +77,7 @@ runs:
         INPUTS_ALL: '${{ inputs.all }}'
         INPUTS_JUST_ONE: '${{ inputs.just-one }}'
         INPUTS_NONE: '${{ inputs.none }}'
-        INPUTS_PULL_REQUEST_NUMBER: '${{ inputs.pull-reques-number }}'
+        INPUTS_PULL_REQUEST_NUMBER: '${{ inputs.pull-request-number }}'
         INPUTS_REQUEST_REVIEW: '${{ inputs.request-review }}'
         INPUTS_SOME: '${{ inputs.some }}'
       run: |
@@ -126,7 +126,7 @@ runs:
         echo "ACTION_STATUS=GET_LABELS_FROM_CONTEXT" >> $GITHUB_ENV
 
         # Get labels list from github client by pull request number
-        labels=$(gh pr view "$PULL_REQUEST_NUMBER" --json labels | jq '[.labels[].name]' -c)
+        labels=$(GH_TOKEN='${{ inputs.github_token }}' gh pr view "$PULL_REQUEST_NUMBER" --json labels | jq '[.labels[].name]' -c)
 
         # Store the pull request labels found
         echo "LABELS=$(echo $labels)" >> $GITHUB_ENV
@@ -218,7 +218,7 @@ runs:
         echo "ACTION_STATUS=GET_LAST_REVIEW" >> $GITHUB_ENV
 
         # Get the last review written for this 'github-action'.
-        lastreview=$(gh pr view $PULL_REQUEST_NUMBER --json reviews | jq "[ .reviews[] | select( (.author.login == \"github-actions\") and (.body | startswith(\"$INPUTS_REQUEST_REVIEW_HEADER\") ) ) ] | max_by(.submittedAt)" -c)
+        lastreview=$(GH_TOKEN='${{ inputs.github_token }}' gh pr view $INPUTS_PULL_REQUEST_NUMBER --json reviews | jq "[ .reviews[] | select( (.author.login == \"github-actions\") and (.body | startswith(\"$INPUTS_REQUEST_REVIEW_HEADER\") ) ) ] | max_by(.submittedAt)" -c)
 
         # Initialize the CREATE_REVIEW flag as false by default.
         echo "CREATE_REVIEW=false" >> $GITHUB_ENV
@@ -254,7 +254,7 @@ runs:
         echo "ACTION_STATUS=SEND_APPROVED_REVIEW" >> $GITHUB_ENV
 
         # Get the GitHub repository name to use it in a request.
-        GITHUB_REPOSITORY=$(gh repo view --json nameWithOwner | jq .nameWithOwner -c --raw-output)
+        GITHUB_REPOSITORY=$(GH_TOKEN='${{ inputs.github_token }}' gh repo view --json nameWithOwner | jq .nameWithOwner -c --raw-output)
         # Make body message
         body=$(echo "$INPUTS_REQUEST_REVIEW_HEADER All labels are OK in this pull request" | sed 's/"/\\"/g')
 
@@ -275,7 +275,7 @@ runs:
         echo "ACTION_STATUS=SEND_UNAPPROVED_REVIEW" >> $GITHUB_ENV
 
         # Get the GitHub repository name to use it in a request.
-        GITHUB_REPOSITORY=$(gh repo view --json nameWithOwner | jq .nameWithOwner -c --raw-output)
+        GITHUB_REPOSITORY=$(GH_TOKEN='${{ inputs.github_token }}' gh repo view --json nameWithOwner | jq .nameWithOwner -c --raw-output)
         # Make body message
         body=$(echo "$INPUTS_REQUEST_REVIEW_HEADER $ACTION_MESSAGE" | sed 's/"/\\"/g')
 
@@ -310,8 +310,8 @@ runs:
 
         message=$(echo "$ACTION_MESSAGE" | sed 's/"/\\"/g')
         labels=$(echo "$LABELS" | sed 's/"/\\"/g')
-        repourl=$(gh pr view $PULL_REQUEST_NUMBER --json url | jq .url -c --raw-output)
-        repotitle=$(gh pr view $PULL_REQUEST_NUMBER --json title | jq .title -c --raw-output)
+        repourl=$(GH_TOKEN='${{ inputs.github_token }}' gh pr view $PULL_REQUEST_NUMBER --json url | jq .url -c --raw-output)
+        repotitle=$(GH_TOKEN='${{ inputs.github_token }}' gh pr view $PULL_REQUEST_NUMBER --json title | jq .title -c --raw-output)
 
         # Full outputs with the results.
         echo "approved=$VERIFIED" >> $GITHUB_OUTPUT
